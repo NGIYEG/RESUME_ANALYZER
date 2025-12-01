@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.env
+
+# Virtual environments
+resumeenv/
+
+# Django / media files
+media/
+resumes/
+
+# Node / frontend dependencies
+node_modules/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+
+# macOS files
+.DS_Store
+
+# Logs
+*.log
