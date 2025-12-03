@@ -407,7 +407,7 @@ sudo supervisorctl update
 
 ## 👥 Authors
 
-[GEORGE OTIENO NGIYE]
+GEORGE OTIENO NGIYE
 
 ## 📧 Support
 
