@@ -407,13 +407,13 @@ sudo supervisorctl update
 
 ## 👥 Authors
 
-[Your Name/Team]
+[GEORGE OTIENO NGIYE]
 
 ## 📧 Support
 
 For issues and questions:
-- GitHub Issues: [Your Repo Issues URL]
-- Email: support@example.com
+- GitHub Issues: https://github.com/NGIYEG/RESUME_ANALYZER.git
+- Email: georgengiye3@gmail.com
 
 ## 🙏 Acknowledgments
 
@@ -423,4 +423,4 @@ For issues and questions:
 
 ---
 
-**⭐ If you find this project useful, please star it on GitHub!**
+
