@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+
+    <!-- Back Button -->
+    <a href="{% url 'analyzer:dashboard' %}" class="text-cyan-600 hover:underline">← Back</a>
+
+    <!-- Job Info -->
+    <h1 class="text-3xl font-bold mt-4">{{ job.post.title }}</h1>
+    <p class="text-gray-600">{{ job.department.name }}</p>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 my-8">
+
+        <div class="bg-white p-6 shadow rounded">
+            <p class="text-gray-500 text-sm">Total Applicants</p>
+            <p class="text-3xl font-bold">{{ stats.total_applicants|default:0 }}</p>
+        </div>
+
+        <div class="bg-white p-6 shadow rounded">
+            <p class="text-gray-500 text-sm">Avg Score</p>
+            <p class="text-3xl font-bold text-green-600">{{ avg_score|default:0 }}%</p>
+        </div>
+
+        <div class="bg-white p-6 shadow rounded">
+            <p class="text-gray-500 text-sm">Processed</p>
+            <p class="text-3xl font-bold text-blue-600">{{ stats.processed|default:0 }}</p>
+        </div>
+
+        <div class="bg-white p-6 shadow rounded">
+            <p class="text-gray-500 text-sm">Avg Experience</p>
+            <p class="text-3xl font-bold text-purple-600">{{ avg_experience|default:0 }} yrs</p>
+        </div>
+
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- Score Chart -->
+        <div class="bg-white p-6 shadow rounded">
+            <h3 class="mb-4 font-semibold text-gray-800">Score Distribution</h3>
+            <canvas id="scoreChart"></canvas>
+        </div>
+
+        <!-- Education Chart -->
+        <div class="bg-white p-6 shadow rounded">
+            <h3 class="mb-4 font-semibold text-gray-800">Education Levels</h3>
+            <canvas id="educationChart"></canvas>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ✅ Chart JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ===========================
+       SCORE DISTRIBUTION CHART
+    =========================== */
+    const scoreCtx = document.getElementById('scoreChart');
+
+    if (scoreCtx) {
+        new Chart(scoreCtx, {
+            type: 'bar',
+            data: {
+                labels: ['0–39%', '40–59%', '60–79%', '80–100%'],
+                datasets: [{
+                    label: 'Applicants',
+                    data: [
+                        {{ score_ranges.r0_39|default:"0" }},
+                        {{ score_ranges.r40_59|default:"0" }},
+                        {{ score_ranges.r60_79|default:"0" }},
+                        {{ score_ranges.r80_100|default:"0" }}
+                    ]
+                }]
+            },
+            options: {   <!-- ✅ options is now INSIDE the chart -->
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+});
+</script>
+
+
+
+{% endblock %}
+
+

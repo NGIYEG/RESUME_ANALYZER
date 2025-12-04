@@ -37,7 +37,7 @@ def train():
         # Tokenize targets
         labels = tokenizer(targets, max_length=512, truncation=True, padding="max_length")
         
-        # Replace pad token id in labels with -100 to ignore padding in loss calculation
+       
         labels["input_ids"] = [
             [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
         ]

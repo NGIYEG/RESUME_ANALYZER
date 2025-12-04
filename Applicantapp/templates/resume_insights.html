@@ -1,17 +1,204 @@
-<h2>Insights for {{ applicant.first_name }}</h2>
+{% extends 'base.html' %}
+{% load static %}
 
-<div style="display: flex; gap: 20px;">
-    <div style="width: 50%;">
-        <h3>🤖 AI Analysis</h3>
-        <p><strong>Skills:</strong> {{ skills }}</p>
-        <p><strong>Education:</strong> {{ education }}</p>
-        <p><strong>Experience:</strong> {{ experience }}</p>
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border-l-4 border-cyan-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-4xl font-bold text-gray-800 mb-2">
+            Resume Analysis: {{ applicant.first_name }} {{ applicant.last_name }}
+          </h1>
+          <p class="text-gray-500">{{ applicant.email }}</p>
+        </div>
+        <div class="text-right">
+          <span class="inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full font-semibold border border-green-300">
+            ✓ Analysis Complete
+          </span>
+        </div>
+      </div>
     </div>
 
-    <div style="width: 50%;">
-        <h3>📄 Raw Text Read by TrOCR</h3>
-        <pre style="background: #f4f4f4; padding: 10px; white-space: pre-wrap;">
-{{ raw_text }}
-        </pre>
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- LEFT SIDE: AI Analysis -->
+      <div class="space-y-6">
+        
+        <!-- Skills Section -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              Technical Skills
+            </h3>
+          </div>
+          <div class="p-6">
+            {% if skills %}
+              <div class="flex flex-wrap gap-2">
+                {% for skill in skills %}
+                  <span class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium border border-blue-200 hover:bg-blue-100 transition">
+                    {{ skill }}
+                  </span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-gray-400 italic">No skills extracted</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Education Section -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+              </svg>
+              Education
+            </h3>
+          </div>
+          <div class="p-6">
+            {% if education %}
+              <ul class="space-y-3">
+                {% for edu in education %}
+                  <li class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-purple-500 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                    <span class="text-gray-700 font-medium">{{ edu }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-gray-400 italic">No education info extracted</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Work Experience Section -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="px-6 py-4 bg-gradient-to-r from-green-500 to-green-600">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
+              </svg>
+              Work Experience
+            </h3>
+          </div>
+          <div class="p-6">
+            {% if experience %}
+              <ul class="space-y-4">
+                {% for exp in experience %}
+                  <li class="border-l-4 border-green-400 pl-4 py-2 bg-green-50 rounded-r-lg">
+                    <p class="text-gray-800 font-semibold">{{ exp }}</p>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-gray-400 italic">No experience extracted</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Contact Info (if available) -->
+        {% if contact.email or contact.phone %}
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="px-6 py-4 bg-gradient-to-r from-cyan-500 to-cyan-600">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+              Contact Information
+            </h3>
+          </div>
+          <div class="p-6 space-y-3">
+            {% if contact.email %}
+              <div class="flex items-center gap-3">
+                <span class="text-gray-600 font-medium">Email:</span>
+                <a href="mailto:{{ contact.email }}" class="text-cyan-600 hover:underline">
+                  {{ contact.email }}
+                </a>
+              </div>
+            {% endif %}
+            {% if contact.phone %}
+              <div class="flex items-center gap-3">
+                <span class="text-gray-600 font-medium">Phone:</span>
+                <span class="text-gray-700">{{ contact.phone }}</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Projects (if available) -->
+        {% if projects %}
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+              Projects
+            </h3>
+          </div>
+          <div class="p-6">
+            <div class="flex flex-wrap gap-2">
+              {% for project in projects %}
+                <span class="px-3 py-1 bg-orange-50 text-orange-700 rounded-md text-sm border border-orange-200">
+                  {{ project }}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- RIGHT SIDE: Raw OCR Text -->
+      <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden sticky top-8">
+          <div class="px-6 py-4 bg-gradient-to-r from-gray-700 to-gray-800">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+              </svg>
+              Raw Text from TrOCR
+            </h3>
+            <p class="text-gray-300 text-sm mt-1">Original OCR output before AI processing</p>
+          </div>
+          <div class="p-6 max-h-[800px] overflow-y-auto">
+            <pre class="text-sm text-gray-700 whitespace-pre-wrap font-mono bg-gray-50 p-4 rounded-lg border border-gray-200">{{ raw_text }}</pre>
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-8 flex gap-4 justify-center">
+      <a href="{% url 'job_advert' %}" 
+         class="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition shadow-md hover:shadow-lg">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        Back to Jobs
+      </a>
+      <a href="mailto:{{ applicant.email }}" 
+         class="inline-flex items-center gap-2 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition shadow-md hover:shadow-lg">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        </svg>
+        Contact Applicant
+      </a>
+    </div>
+
+  </div>
 </div>
+{% endblock %}

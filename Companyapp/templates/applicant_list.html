@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border-l-4 border-cyan-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-4xl font-bold text-gray-800 mb-2">All Applicants</h1>
+          <p class="text-gray-500">Manage and review candidate applications</p>
+        </div>
+        <div class="text-right">
+          <span class="inline-block px-4 py-2 bg-cyan-100 text-cyan-700 rounded-full font-semibold border border-cyan-300">
+            {{ applicants|length }} Total Applicants
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Options -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Search by Name</label>
+          <input type="text" id="searchName" placeholder="Search applicants..." 
+                 class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Job</label>
+          <select id="filterJob" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cyan-500">
+            <option value="">All Jobs</option>
+            {% for job in jobs %}
+              <option value="{{ job.id }}">{{ job.post.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+          <select id="sortBy" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cyan-500">
+            <option value="date">Application Date</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Applicants Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="applicantsGrid">
+      {% for applicant in applicants %}
+      <div class="applicant-card bg-white rounded-xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden" 
+           data-job-id="{{ applicant.job.id }}" 
+           data-name="{{ applicant.first_name }} {{ applicant.last_name }}"
+           data-date="{{ applicant.application_date|date:'Y-m-d' }}">
+        
+        <!-- Card Header -->
+        <div class="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-cyan-600 font-bold text-xl">
+              {{ applicant.first_name.0 }}{{ applicant.last_name.0 }}
+            </div>
+            <div>
+              <h3 class="text-white font-bold text-lg">{{ applicant.first_name }} {{ applicant.last_name }}</h3>
+              <p class="text-cyan-100 text-sm">{{ applicant.email }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="p-6 space-y-4">
+          
+          <!-- Applied For -->
+          <div>
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Applied For</p>
+            <p class="text-gray-800 font-semibold">{{ applicant.job.post.title }}</p>
+            <p class="text-xs text-gray-500">{{ applicant.job.department.name }}</p>
+          </div>
+
+          <!-- Application Date -->
+          <div>
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Applied On</p>
+            <p class="text-gray-700">{{ applicant.application_date|date:"M d, Y" }}</p>
+          </div>
+
+          <!-- LinkedIn & Portfolio -->
+          <div class="flex gap-2">
+            {% if applicant.linkedIn_profile %}
+            <a href="{{ applicant.linkedIn_profile }}" target="_blank" 
+               class="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition text-center">
+              LinkedIn
+            </a>
+            {% endif %}
+            {% if applicant.portfolio_link %}
+            <a href="{{ applicant.portfolio_link }}" target="_blank" 
+               class="flex-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-100 transition text-center">
+              Portfolio
+            </a>
+            {% endif %}
+          </div>
+
+          <!-- Resume Status -->
+          <div class="flex items-center gap-2 text-sm">
+            {% if applicant.resume %}
+              <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              <span class="text-green-600 font-medium">Resume Uploaded</span>
+            {% else %}
+              <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+              <span class="text-red-600 font-medium">No Resume</span>
+            {% endif %}
+          </div>
+
+        </div>
+
+        <!-- Card Footer - Actions -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-2">
+          <a href="{% url 'resume_insights' applicant.applicant_id %}" 
+             class="flex-1 px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-semibold hover:bg-cyan-600 transition text-center">
+            View Analysis
+          </a>
+          <a href="mailto:{{ applicant.email }}" 
+             class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </a>
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="col-span-full">
+        <div class="bg-white rounded-xl shadow-md p-12 text-center">
+          <svg class="w-20 h-20 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <h3 class="text-xl font-semibold text-gray-700 mb-2">No Applicants Yet</h3>
+          <p class="text-gray-500 mb-6">Start advertising jobs to receive applications</p>
+          <a href="{% url 'advertise_job' %}" 
+             class="inline-block px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition font-semibold">
+            Create Job Advertisement
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Back Button -->
+    <div class="mt-8">
+      <a href="{% url 'job_advert' %}" 
+         class="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition shadow-md hover:shadow-lg">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        Back to Jobs
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Filter & Search JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('searchName');
+  const jobFilter = document.getElementById('filterJob');
+  const sortSelect = document.getElementById('sortBy');
+  const applicantCards = document.querySelectorAll('.applicant-card');
+
+  // Search by name
+  searchInput.addEventListener('input', filterApplicants);
+  jobFilter.addEventListener('change', filterApplicants);
+  sortSelect.addEventListener('change', sortApplicants);
+
+  function filterApplicants() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedJob = jobFilter.value;
+
+    applicantCards.forEach(card => {
+      const name = card.dataset.name.toLowerCase();
+      const jobId = card.dataset.jobId;
+
+      const matchesSearch = name.includes(searchTerm);
+      const matchesJob = !selectedJob || jobId === selectedJob;
+
+      if (matchesSearch && matchesJob) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function sortApplicants() {
+    const sortValue = sortSelect.value;
+    const grid = document.getElementById('applicantsGrid');
+    const cardsArray = Array.from(applicantCards);
+
+    cardsArray.sort((a, b) => {
+      if (sortValue === 'name') {
+        return a.dataset.name.localeCompare(b.dataset.name);
+      } else if (sortValue === 'date') {
+        return new Date(b.dataset.date) - new Date(a.dataset.date);
+      }
+      return 0;
+    });
+
+    cardsArray.forEach(card => grid.appendChild(card));
+  }
+});
+</script>
+
+{% endblock %}

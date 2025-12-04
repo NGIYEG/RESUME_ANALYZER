@@ -1,33 +1,91 @@
 import re
+from difflib import SequenceMatcher
+
+def fuzzy_match(skill_required, skill_candidate, threshold=0.8):
+    """
+    Returns True if skills are similar enough.
+    Example: 'JavaScript' matches 'Javascript', 'JS'
+    """
+    skill_req = skill_required.lower().strip()
+    skill_can = skill_candidate.lower().strip()
+    
+    # Exact match
+    if skill_req == skill_can:
+        return True
+    
+    # One contains the other (e.g., 'react' in 'react.js')
+    if skill_req in skill_can or skill_can in skill_req:
+        return True
+    
+    # Similarity ratio
+    ratio = SequenceMatcher(None, skill_req, skill_can).ratio()
+    return ratio >= threshold
 
 def calculate_match_percentage(job_advert, resume_data, linkedin_data=None):
     """
     Compares JobAdvertised requirements vs. Resume Extraction data.
-    Returns a score from 0 to 100.
+    Returns a detailed score breakdown.
     """
-    score = 0
-    total_weight = 0
+    breakdown = {
+        'total_score': 0,
+        'skills_score': 0,
+        'experience_score': 0,
+        'education_score': 0,
+        'matched_skills': [],
+        'missing_skills': [],
+        'candidate_years': 0,
+        'required_years': 0
+    }
 
     # ==============================
     # 1. SKILLS MATCHING (Weight: 40%)
     # ==============================
-    required_skills = [s.strip().lower() for s in job_advert.required_skills.split(',') if s.strip()]
-    candidate_skills = [s.lower() for s in resume_data.get('skills', [])]
+    required_skills = [
+        s.strip().lower() 
+        for s in job_advert.required_skills.split(',') 
+        if s.strip()
+    ]
     
-    # Add LinkedIn skills if available
+    candidate_skills = [
+        s.lower().strip() 
+        for s in resume_data.get('skills', []) 
+        if s.strip()
+    ]
+    
+    # Merge LinkedIn skills
     if linkedin_data and 'skills' in linkedin_data:
-        candidate_skills += [s.lower() for s in linkedin_data['skills']]
+        candidate_skills += [
+            s.lower().strip() 
+            for s in linkedin_data['skills'] 
+            if s.strip()
+        ]
+    
+    # Remove duplicates
+    candidate_skills = list(set(candidate_skills))
 
     if required_skills:
-        # Find intersection (skills present in both lists)
-        matches = set(required_skills).intersection(set(candidate_skills))
-        skill_score = (len(matches) / len(required_skills)) * 100
-        score += skill_score * 0.40  # 40% weight
-        total_weight += 0.40
+        matched_skills = []
+        
+        for req_skill in required_skills:
+            # Check for exact or fuzzy match
+            for can_skill in candidate_skills:
+                if fuzzy_match(req_skill, can_skill):
+                    matched_skills.append(req_skill)
+                    break
+        
+        breakdown['matched_skills'] = matched_skills
+        breakdown['missing_skills'] = [
+            s for s in required_skills 
+            if s not in matched_skills
+        ]
+        
+        skill_score = (len(matched_skills) / len(required_skills)) * 100
+        breakdown['skills_score'] = round(skill_score, 1)
+        breakdown['total_score'] += skill_score * 0.40
     else:
-        # If no skills required, give full points for this section
-        score += 40
-        total_weight += 0.40
+        # No skills required = full points
+        breakdown['skills_score'] = 100
+        breakdown['total_score'] += 40
 
     # ==============================
     # 2. EXPERIENCE MATCHING (Weight: 30%)
@@ -35,59 +93,110 @@ def calculate_match_percentage(job_advert, resume_data, linkedin_data=None):
     required_years = job_advert.min_experience_years
     candidate_years = 0
 
-    # Extract years from resume strings like "Software Dev (2 Years)"
-    # We sum up all years found
-    for job in resume_data.get('work_experience', []):
-        years_found = re.findall(r'\((\d+)\s*Years\)', job)
-        if years_found:
-            candidate_years += int(years_found[0])
+    # Extract years from work experience entries
+    for job_entry in resume_data.get('work_experience', []):
+        # Pattern 1: "Software Dev (2 Years)"
+        years_pattern1 = re.findall(r'\((\d+)\s*Years?\)', job_entry, re.IGNORECASE)
+        if years_pattern1:
+            candidate_years += int(years_pattern1[0])
+            continue
+        
+        # Pattern 2: "Started 2020" (assume 1 year)
+        if 'started' in job_entry.lower():
+            candidate_years += 1
+            continue
+        
+        # Pattern 3: Look for year ranges "2020-2023"
+        year_range = re.findall(r'20\d{2}\s*-\s*20\d{2}', job_entry)
+        if year_range:
+            years = re.findall(r'20\d{2}', year_range[0])
+            if len(years) == 2:
+                candidate_years += int(years[1]) - int(years[0])
     
-    # Add LinkedIn experience logic here if needed
+    # Add LinkedIn experience if available
+    if linkedin_data and 'years_experience' in linkedin_data:
+        candidate_years += linkedin_data['years_experience']
+    
+    breakdown['candidate_years'] = candidate_years
+    breakdown['required_years'] = required_years
     
     if required_years > 0:
         if candidate_years >= required_years:
             exp_score = 100
         else:
-            # Partial credit (e.g., has 1 year but needs 2 = 50%)
-            exp_score = (candidate_years / required_years) * 100
+            # Partial credit with diminishing returns
+            exp_score = min((candidate_years / required_years) * 100, 100)
         
-        score += exp_score * 0.30
-        total_weight += 0.30
+        breakdown['experience_score'] = round(exp_score, 1)
+        breakdown['total_score'] += exp_score * 0.30
     else:
-        score += 30
-        total_weight += 0.30
+        breakdown['experience_score'] = 100
+        breakdown['total_score'] += 30
 
     # ==============================
     # 3. EDUCATION MATCHING (Weight: 30%)
     # ==============================
-    # Simple hierarchy mapping
-    edu_levels = {'Certificate': 1, 'Diploma': 2, 'Bachelor': 3, 'Master': 4, 'PhD': 5}
-    req_level = edu_levels.get(job_advert.required_education, 1)
+    edu_levels = {
+        'Certificate': 1, 
+        'Diploma': 2, 
+        'Bachelor': 3, 
+        'Master': 4, 
+        'PhD': 5
+    }
     
+    req_level = edu_levels.get(job_advert.required_education, 1)
     candidate_max_level = 0
     candidate_education = resume_data.get('education', [])
     
-    # Check what levels the candidate has
+    # Parse education entries
     for edu in candidate_education:
+        if not edu:
+            continue
+            
         edu_lower = edu.lower()
-        if 'phd' in edu_lower or 'doctorate' in edu_lower:
+        
+        # Check from highest to lowest
+        if any(term in edu_lower for term in ['phd', 'doctorate', 'doctoral']):
             candidate_max_level = max(candidate_max_level, 5)
-        elif 'master' in edu_lower:
+        elif any(term in edu_lower for term in ['master', 'msc', 'ma', 'mba']):
             candidate_max_level = max(candidate_max_level, 4)
-        elif 'bachelor' in edu_lower or 'bsc' in edu_lower or 'degree' in edu_lower:
+        elif any(term in edu_lower for term in ['bachelor', 'bsc', 'ba', 'b.sc', 'b.a', 'degree']):
             candidate_max_level = max(candidate_max_level, 3)
         elif 'diploma' in edu_lower:
             candidate_max_level = max(candidate_max_level, 2)
         elif 'certificate' in edu_lower:
             candidate_max_level = max(candidate_max_level, 1)
 
+    breakdown['candidate_education_level'] = candidate_max_level
+    breakdown['required_education_level'] = req_level
+    
     if candidate_max_level >= req_level:
         edu_score = 100
+    elif candidate_max_level == req_level - 1:
+        # Close but not quite (e.g., Diploma when Bachelor required)
+        edu_score = 50
     else:
-        # Penalize if underqualified
-        edu_score = 0 
+        # Significantly underqualified
+        edu_score = 0
     
-    score += edu_score * 0.30
-    total_weight += 0.30
+    breakdown['education_score'] = round(edu_score, 1)
+    breakdown['total_score'] += edu_score * 0.30
 
-    return round(score, 1)
+    # Final score
+    breakdown['total_score'] = round(breakdown['total_score'], 1)
+    
+    return breakdown
+
+
+def get_match_rating(score):
+    """
+    Convert numerical score to qualitative rating.
+    """
+    if score >= 80:
+        return "Excellent Match"
+    elif score >= 60:
+        return "Good Match"
+    elif score >= 40:
+        return "Fair Match"
+    else:
+        return "Poor Match"

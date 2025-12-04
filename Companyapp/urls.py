@@ -6,5 +6,5 @@ urlpatterns = [
     path('advertise-job/', views.create_job_advert, name='job_advert'),
     path("load-posts/", views.load_posts, name="load_posts"),
     path('job/<int:job_id>/applicants/', views.job_applicants_ranked, name='job_applicants_ranked'),
-    path('/applicants/', views.applicants, name='job_applicants_ranked'),
+    path('rankings/<int:job_id>/', views.job_applicants_ranked, name='rankings'),
 ]

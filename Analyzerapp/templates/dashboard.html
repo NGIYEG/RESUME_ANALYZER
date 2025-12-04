@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">📊 Analytics Dashboard</h1>
+            <p class="text-gray-600">Overview of all job postings and applications</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm uppercase">Total Jobs</p>
+                        <p class="text-3xl font-bold text-cyan-600">{{ total_jobs }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">💼</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm uppercase">Total Applications</p>
+                        <p class="text-3xl font-bold text-blue-600">{{ total_applications }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">📄</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm uppercase">Avg Match Rate</p>
+                        <p class="text-3xl font-bold text-green-600">
+                            {% widthratio dashboard_data|length 1 total_jobs|default:1 %}%
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jobs Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Job Performance</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Job Title</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Applicants</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Processed</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Avg Match</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for item in dashboard_data %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">{{ item.job.post.title }}</div>
+                                <div class="text-xs text-gray-500">Posted {{ item.job.created_at|date:"M d, Y" }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ item.job.department.name }}</td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="text-lg font-semibold text-gray-800">{{ item.total_applicants }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="text-sm font-medium text-green-600">{{ item.processed }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-3 py-1 rounded-full text-sm font-semibold
+                                    {% if item.avg_match_score >= 70 %}bg-green-100 text-green-800
+                                    {% elif item.avg_match_score >= 50 %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ item.avg_match_score }}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                {% if item.is_open %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Open</span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Closed</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex justify-center space-x-2">
+                                    <a href="{% url 'analyzer:job_analytics' item.job.id %}" 
+                                       class="text-cyan-600 hover:text-cyan-800 text-sm font-medium">
+                                        View Details
+                                    </a>
+                                    <span class="text-gray-300">|</span>
+                                    <a href="{% url 'job_applicants_ranked' item.job.id %}" 
+                                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                        Applicants
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                No jobs posted yet. <a href="{% url 'job_advert' %}" class="text-cyan-600 hover:underline">Create a job posting</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Top Skills Section -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">🎯 Most Common Skills Across Applicants</h2>
+            <div class="flex flex-wrap gap-3">
+                {% for item in dashboard_data %}
+                    {% for skill in item.top_skills %}
+                    <span class="px-4 py-2 bg-linear-to-r from-cyan-500 to-blue-500 text-white rounded-full text-sm font-medium shadow-sm">
+                        {{ skill }}
+                    </span>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 flex gap-4">
+            <a href="{% url 'job_advert' %}" 
+               class="px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition font-medium">
+                + Create New Job
+            </a>
+            <a href="{% url 'apply_job' %}" 
+               class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-medium">
+                View Application Form
+            </a>
+        </div>
+    </div>
+{% endblock %}
