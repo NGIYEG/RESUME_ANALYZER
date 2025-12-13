@@ -197,3 +197,55 @@ def job_applicants_ranked(request, job_id):
     }
     return render(request, 'ranked_applicants.html', context)
 
+def manage_jobs(request):
+    jobs = JobAdvertised.objects.select_related('post', 'department').all().order_by('-created_at')
+    
+    job_data = []
+    for job in jobs:
+        # FIX: Use 'job.post' because Application is linked to the Post model, not JobAdvertised
+        count = Application.objects.filter(post=job.post).count()
+        
+        job_data.append({
+            'job': job,
+            'applicant_count': count,
+            'selected_courses': job.selected_courses.all()
+        })
+    
+    return render(request, 'job_list.html', {'job_data': job_data})
+
+def edit_job(request, job_id):
+    """
+    Allows editing an existing job advertisement.
+    """
+    job = get_object_or_404(JobAdvertised, id=job_id)
+    
+    if request.method == 'POST':
+        form = JobAdvertisedForm(request.POST, instance=job)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Job '{job.post.title}' updated successfully!")
+            return redirect('manage_jobs')
+    else:
+        form = JobAdvertisedForm(instance=job)
+        
+    return render(request, 'advertise_job.html', {
+        'form': form,
+        'is_edit': True, # Flag to change button text in template
+        'job': job
+    })
+
+
+def delete_job(request, job_id):
+    """
+    Deletes a job advertisement.
+    """
+    job = get_object_or_404(JobAdvertised, id=job_id)
+    
+    if request.method == 'POST':
+        title = job.post.title
+        job.delete()
+        messages.success(request, f"Job '{title}' has been deleted.")
+        return redirect('manage_jobs')
+    
+    # Render a simple confirmation page
+    return render(request, 'delete_confirm.html', {'job': job})

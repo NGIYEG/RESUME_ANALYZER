@@ -4,6 +4,7 @@ Django settings for Resumeanalyzer project.
 import environ
 import os
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -285,3 +286,12 @@ NLP_MAX_LENGTH = 512
 SKILL_MATCH_WEIGHT = 0.40
 EXPERIENCE_MATCH_WEIGHT = 0.30
 EDUCATION_MATCH_WEIGHT = 0.30
+
+
+
+CELERY_BEAT_SCHEDULE = {
+    'delete-expired-jobs-every-night': {
+        'task': 'Companyapp.tasks.delete_expired_jobs',
+        'schedule': crontab(hour=0, minute=0),  # Runs daily at midnight
+    },
+}

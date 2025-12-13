@@ -7,5 +7,7 @@ urlpatterns = [
     path("load-posts/", views.load_posts, name="load_posts"),
     path("load-courses/", views.load_courses, name="load_courses"),  # NEW
     path('job/<int:job_id>/applicants/', views.job_applicants_ranked, name='rankings'),
-    # path('rankings/<int:job_id>/', views.job_applicants_ranked, name='rankings'),
+    path('manage-jobs/', views.manage_jobs, name='manage_jobs'),  # The Admin Dashboard
+    path('edit-job/<int:job_id>/', views.edit_job, name='edit_job'), # Edit Logic
+    path('delete-job/<int:job_id>/', views.delete_job, name='delete_job'), # Delete Logic
 ]
