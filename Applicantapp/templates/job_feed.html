@@ -11,15 +11,29 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {% for job in jobs %}
-            <div class="flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full hover:shadow-lg transition-shadow duration-300">
+            <div class="flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-full hover:shadow-lg transition-shadow duration-300 relative group">
                 
+                {% if job.match_score %}
+                <div class="absolute top-4 right-4 z-20">
+                    <div class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md
+                        {% if job.match_score >= 80 %} bg-green-100/90 text-green-700 border-green-200
+                        {% elif job.match_score >= 50 %} bg-yellow-100/90 text-yellow-700 border-yellow-200
+                        {% else %} bg-gray-100/90 text-gray-600 border-gray-200 {% endif %}">
+                        
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ job.match_score }}% Match
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="p-8 grow">
                     <span class="text-cyan-600 font-bold text-xs uppercase tracking-wider mb-2 block">
                         {{ job.department.name }}
                     </span>
 
-                    <h2 class="text-2xl font-bold text-slate-900 mb-4">
-                        {{ job.post.title }}
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4 pr-16"> {{ job.post.title }}
                     </h2>
                     
                     <div class="text-slate-600 text-base mb-8 leading-relaxed">
@@ -104,11 +118,12 @@
                             </span>
                              <span class="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-1">Time Left</span>
                         </div>
-                    <a href="{% url 'apply_job' %}?job_id={{ job.id }}" 
-                    class="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-sm hover:shadow-md">
-                        Apply Now
-                    </a>
-                                        </div>
+                        
+                        <a href="{% url 'apply_job' %}?job_id={{ job.id }}" 
+                           class="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-sm hover:shadow-md">
+                            Apply Now
+                        </a>
+                    </div>
                 </div>
 
             </div>
@@ -136,11 +151,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (distance < 0) {
                 timer.innerHTML = "<span class='text-red-500'>Expired</span>";
-                // Optional: Disable the apply button for this card
+                // Disable the apply button for this card
                 const btn = timer.closest('.p-8').querySelector('a');
                 if(btn) {
-                    btn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                    btn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none', 'bg-slate-400');
+                    btn.classList.remove('bg-slate-900', 'hover:bg-slate-800');
                     btn.innerText = "Closed";
+                    btn.href = "#"; // Remove link
                 }
             } else {
                 const days = Math.floor(distance / (1000 * 60 * 60 * 24));

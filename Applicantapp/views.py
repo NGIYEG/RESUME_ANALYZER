@@ -1,23 +1,94 @@
 # views.py
-from django.shortcuts import get_object_or_404, render, redirect
-from .forms import ApplicantApplyForm
-from Companyapp.models import Application, JobAdvertised
 from django.contrib import messages
-from .tasks import process_resume_task  # Import the Celery task
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import get_object_or_404, redirect, render
+from .forms import ApplicantApplyForm, ApplicantProfileForm, UserRegisterForm
+from .models import Applicant
+from .tasks import process_resume_task
+from Companyapp.matcher import calculate_match_percentage
+from Companyapp.models import Application, JobAdvertised
+from Extractionapp.models import ResumeExtraction
+
+def register_view(request):
+    if request.method == 'POST':
+        user_form = UserRegisterForm(request.POST)
+        profile_form = ApplicantProfileForm(request.POST, request.FILES)
+        
+        if user_form.is_valid() and profile_form.is_valid():
+            user = user_form.save(commit=False)
+            user.set_password(user_form.cleaned_data['password'])
+            user.save()
+            
+            profile = profile_form.save(commit=False)
+            profile.user = user
+            profile.save()
+            
+            # Trigger Extraction immediately for the Smart Feed
+            process_resume_task.delay(profile.id)
+            
+            login(request, user)
+            messages.success(request, "Account created! We are analyzing your resume...")
+            return redirect('job_feed')
+    else:
+        user_form = UserRegisterForm()
+        profile_form = ApplicantProfileForm()
+        
+    return render(request, 'register.html', {'user_form': user_form, 'profile_form': profile_form})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('job_feed')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'login.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
 
 
 def job_feed(request):
-    """
-    Displays active jobs in a blog-like format.
-    """
-    jobs = JobAdvertised.objects.all().order_by('-created_at') # Assuming created_at exists
+    jobs = JobAdvertised.objects.all()
     
-    # Optional: Pre-process skills for bullet points (split by comma)
-    for job in jobs:
-        if job.required_skills:
-            job.skill_list = [s.strip() for s in job.required_skills.split(',')]
+    # If user is logged in and has a processed resume, sort by match
+    if request.user.is_authenticated:
+        try:
+            profile = request.user.applicant_profile
             
-    return render(request, 'applicant_feed.html', {'jobs': jobs})
+            # Only run matching if we have extracted data
+            if profile.extracted_data:
+                ranked_jobs = []
+                
+                for job in jobs:
+                    # Run the Matcher
+                    score_data = calculate_match_percentage(job, profile.extracted_data)
+                    score = score_data['total_score']
+                    
+                    # Boost score if locations match (Simple check)
+                    # Assuming JobAdvertised has a 'location' field or we check text
+                    if profile.location and profile.location.lower() in job.description.lower():
+                        score += 5 # 5% Bonus for location match
+                    
+                    # Attach score to job object temporarily for the template
+                    job.match_score = int(round(score))
+                    ranked_jobs.append(job)
+                
+                # Sort: Highest score first
+                ranked_jobs.sort(key=lambda x: x.match_score, reverse=True)
+                jobs = ranked_jobs
+                
+        except Applicant.DoesNotExist:
+            pass # User is admin or has no profile, show default list
+
+    return render(request, 'job_feed.html', {'jobs': jobs})
+
 
 def apply_for_job(request):
     # 1. Get job_id from the URL query string (e.g., ?job_id=5)
