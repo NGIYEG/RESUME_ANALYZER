@@ -283,8 +283,9 @@ EDUCATION_MATCH_WEIGHT = 0.30
 
 
 CELERY_BEAT_SCHEDULE = {
-    'delete-expired-jobs-every-night': {
+    'delete-expired-jobs-every-minute': {
         'task': 'Companyapp.tasks.delete_expired_jobs',
-        'schedule': crontab(hour=0, minute=0),  # Runs daily at midnight
+        # Change this to run every minute
+        'schedule': crontab(minute='*'), 
     },
 }
