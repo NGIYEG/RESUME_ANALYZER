@@ -1,6 +1,8 @@
 from . import views
 from django.urls import path
 
+app_name = 'career'
+
 urlpatterns = [
     # path('', views.index, name='index')
     path('', views.login_view, name='login'),
@@ -11,5 +13,5 @@ urlpatterns = [
      path('logout/', views.logout_view, name='logout'),
      path('profile/', views.profile_view, name='profile_dashboard'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
-
+    path('profile/view/<int:pk>/', views.public_profile_view, name='public_profile'),
 ]

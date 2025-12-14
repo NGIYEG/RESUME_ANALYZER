@@ -7,7 +7,7 @@
         
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6 relative group">
             
-            <div class="h-48 bg-linear-to-r from-slate-800 to-cyan-900 relative">
+            <div class="h-48 bg-gradient-to-r from-slate-800 to-cyan-900 relative">
                 <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             </div>
             
@@ -18,12 +18,12 @@
                         {% if profile.profile_picture %}
                             <img src="{{ profile.profile_picture.url }}" alt="Profile" class="w-full h-full object-cover rounded-full">
                         {% else %}
-                            <img src="https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=random&size=160&bold=true" class="w-full h-full object-cover rounded-full">
+                            <img src="https://ui-avatars.com/api/?name={{ profile.user.first_name }}+{{ profile.user.last_name }}&background=random&size=160&bold=true" class="w-full h-full object-cover rounded-full">
                         {% endif %}
                     </div>
 
                     <div class="mt-4 md:mt-0 md:ml-6 flex-1 w-full">
-                        <h1 class="text-3xl font-extrabold text-slate-900">{{ user.first_name }} {{ user.last_name }}</h1>
+                        <h1 class="text-3xl font-extrabold text-slate-900">{{ profile.user.first_name }} {{ profile.user.last_name }}</h1>
                         
                         <div class="flex flex-col sm:flex-row gap-y-2 gap-x-6 text-slate-600 mt-2">
                             {% if profile.location %}
@@ -33,7 +33,7 @@
                             {% endif %}
                             
                             <span class="flex items-center gap-1.5 text-sm font-medium">
-                                <i class="fa-solid fa-envelope text-slate-400"></i> {{ user.email }}
+                                <i class="fa-solid fa-envelope text-slate-400"></i> {{ profile.user.email }}
                             </span>
 
                             {% if profile.phone %}
@@ -44,12 +44,14 @@
                         </div>
                     </div>
 
+                    {% if request.user == profile.user %}
                     <div class="mt-6 md:mt-0">
-                        <a href="{% url 'profile_edit' %}" 
+                        <a href="{% url 'career:profile_edit' %}" 
                            class="inline-flex items-center gap-2 px-6 py-2.5 bg-cyan-600 text-white font-bold rounded-full hover:bg-cyan-700 transition shadow-md hover:shadow-lg text-sm">
                             <i class="fa-solid fa-pen-to-square"></i> Edit Profile
                         </a>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -65,10 +67,14 @@
                     {% if profile.bio %}
                         <p class="text-slate-700 whitespace-pre-line leading-relaxed text-base">{{ profile.bio }}</p>
                     {% else %}
-                        <div class="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-6 text-center">
-                            <p class="text-slate-500 mb-3">Write a short bio to introduce yourself to recruiters.</p>
-                            <a href="{% url 'profile_edit' %}" class="text-cyan-700 font-bold hover:underline text-sm">Add Bio</a>
-                        </div>
+                        {% if request.user == profile.user %}
+                            <div class="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-6 text-center">
+                                <p class="text-slate-500 mb-3">Write a short bio to introduce yourself to recruiters.</p>
+                                <a href="{% url 'career:profile_edit' %}" class="text-cyan-700 font-bold hover:underline text-sm">Add Bio</a>
+                            </div>
+                        {% else %}
+                            <p class="text-slate-400 italic">No bio provided.</p>
+                        {% endif %}
                     {% endif %}
                 </div>
                 
@@ -128,7 +134,9 @@
                         <div class="bg-amber-50 border border-amber-100 text-amber-800 px-4 py-3 rounded-lg text-sm mb-3">
                             No resume uploaded yet.
                         </div>
-                        <a href="{% url 'profile_edit' %}" class="block w-full text-center text-cyan-700 font-bold text-sm hover:underline">Upload Resume</a>
+                        {% if request.user == profile.user %}
+                            <a href="{% url 'career:profile_edit' %}" class="block w-full text-center text-cyan-700 font-bold text-sm hover:underline">Upload Resume</a>
+                        {% endif %}
                     {% endif %}
                 </div>
 

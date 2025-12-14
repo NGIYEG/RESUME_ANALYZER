@@ -162,10 +162,8 @@
 
               <td class="px-6 py-4">
                 <div class="flex flex-col gap-2">
-                  <a href="{% url 'resume_insights' candidate.applicant.applicant_id %}" 
-                     class="text-cyan-600 hover:text-cyan-800 font-semibold text-sm hover:underline">
-                    View Resume →
-                  </a>
+                  <a href="{% url 'career:public_profile' candidate.applicant.pk %}" 
+                 class="text-cyan-600 hover:text-cyan-800 font-semibold text-sm hover:underline">Review →</a>
                 </div>
               </td>
 
@@ -184,7 +182,7 @@
   </div>
 </div>
 
-<div id="emailModal" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center backdrop-blur-sm">
+<div id="emailModal" class="fixed inset-0 bg-black/50 z-100 hidden flex items-center justify-center backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all scale-95 opacity-0" id="modalContent">
         <div class="bg-slate-900 px-6 py-4 flex justify-between items-center">
             <h3 class="text-white font-bold text-lg"><i class="fa-regular fa-envelope mr-2"></i> Send Bulk Email</h3>

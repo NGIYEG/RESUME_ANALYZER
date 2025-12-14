@@ -1,0 +1,17 @@
+{% extends 'profile_dashboard.html' %}
+
+{% block navbar %}
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block content %}
+    <div class="fixed top-6 left-6 z-50">
+        <a href="javascript:history.back()" class="flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur text-slate-700 font-bold rounded-full shadow-sm hover:shadow-md border border-slate-200 transition">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    {{ block.super }}
+{% endblock %}
